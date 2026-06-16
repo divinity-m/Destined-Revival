@@ -8,6 +8,11 @@ let firstUserInteraction = false;
 
 // Global Variables //
 let now = Date.now();
+let player = {
+    x: cnv.width/2, y: cnv.height/2,
+    r: 15, facingAngle: 0,
+    username: "Life", password: "",
+}
 
 
 // Draw Canvas //
