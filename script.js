@@ -1,1 +1,1 @@
-
+//* DESTINED REVIVAL SCRIPT.JS *//
