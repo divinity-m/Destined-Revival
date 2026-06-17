@@ -11,11 +11,8 @@ let firstUserInteraction = false;
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-analytics.js";
 
-// Check if running in a CI environment with the injected variable
-const configSource = process.env.FIREBASE_CONFIG;
-                
 // The web app's Firebase configuration
-const firebaseConfig = configSource
+const firebaseConfig = process.env.FIREBASE_CONFIG;
             
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
