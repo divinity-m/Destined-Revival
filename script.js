@@ -14,12 +14,30 @@ let firstUserInteraction = false;
 // Global Variables //
 let now = Date.now();
 
+let signInActivated = false;
+let passwordTop = 46;
+let displayOpacity = 0;
+let accountBtnsY = cnv.height*0.5;
+let playBtnY = cnv.height*0.585;
+
 let mouse = {
     x: -20, y: -20,
     pressed: false, over: {},
-    buttonAlpha: 1,
     angleFromPlayer: 0,
     track: false,
+}
+
+let buttonAlpha = {
+    play: 1, login: 1, signin: 1,
+    
+    modifyAlpha(property, mouseOver) {
+        if (mouseOver) {
+            this[property] = Math.max(0.75, this[property] - 0.025);
+        }
+        else {
+            this[property] = Math.min(1, this[property] + 0.025);
+        }
+    },
 }
 
 let player = {
@@ -28,12 +46,21 @@ let player = {
     username: "Soul", password: "",
 }
 
-
+        
 // Event Listeners //
 document.addEventListener("mousemove", mousemoveHandler);
 document.addEventListener("click", clickHandler);
 document.addEventListener("mousedown", mousedownHandler);
 document.addEventListener("mouseup", mouseupHandler);
+
+
+const userIn = document.getElementById("username");
+const displayIn = document.getElementById("display-name");
+const passIn = document.getElementById("password");
+
+[userIn, displayIn, passIn].forEach((input) => {
+    input.addEventListener("input", accountInputHandler);
+});
 
 
 // Draw Canvas //
