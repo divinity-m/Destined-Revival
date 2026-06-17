@@ -29,18 +29,25 @@
 
         <main>
             <canvas id="game-canvas" width="1280px" height="720px"></canvas>
-            <input id="username" type="text" autocomplete="off" placeholder="Name" />
-            <input id="password" type="text" autocomplete="off" style="display: none" />
+
+            <!-- Login Information -->
+            <input id="username" class="login-info" type="text" autocomplete="off" placeholder="Username" />
+            <input id="display-name" class="login-info" type="text" autocomplete="off" placeholder="Display Name" style="display: none" />
+            <input id="password" class="login-info" type="text" autocomplete="off" placeholder="Password" />
         </main>
         
         <!-- JS -->
         <script type="module">
             import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-            import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-analytics.js";
+            import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore-lite.js";
+
+            // Authenticator SDK
+            import { getAuth, signInAnonymously, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+    
             
             // The web app's Firebase configuration
             const firebaseConfig = {
-                apiKey: "AIzaSyDEr6GWFEaZ5qJP1_r4HmlWnr17UBfILXs", 
+                apiKey: "AIzaSyDbDb1YLJDPZxgBXaSs4fZ-IQkdZmJ8Z0w", 
                 authDomain: "destined-revival.firebaseapp.com",
                 projectId: "destined-revival",
                 storageBucket: "destined-revival.firebasestorage.app",
@@ -51,11 +58,57 @@
             
             // Initialize Firebase
             const app = initializeApp(firebaseConfig);
-            export { app };
-            const analytics = getAnalytics(app);
+            const db = getFirestore(app);
+
+            // Initialize Auth
+            const auth = getAuth(app);
             
-            window.firebaseApp = app;
-            window.firebaseAnalytics = analytics;
+            // Trigger Email And Password Sign-in when `admin()` is called
+            window.admin = function(email, password) {
+                signInWithEmailAndPassword(auth, email, password).catch((error) => {
+                    console.error("Login failed:", error)
+                });
+            }
+
+            // Trigger Anonymous Sign-in
+            signInAnonymously(auth).catch((error) => {
+                 console.error("Login failed:", error);
+            });
+
+            let userExists;
+            
+            // Wait for the user to be authenticated before running Firestore queries
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userExists = user;
+                    console.log("Logged into the database. User UID:", user.uid);
+                } else {
+                    console.log("User is signed out.");
+                }
+            });
+
+            // play button functions
+            async function logIntoAccount(username, password) {
+                if (userExists) {
+                    const docRef = doc(db, "users", `${username}-${password}`);
+                    const docSnap = await getDoc(docRef);
+                    if (docSnap.exists()) {
+                        console.log("Username:", docSnap.data().username);
+                    } else {
+                        console.log("No such user found!");
+                    }
+                }
+            }
+
+            async function createNewAccount(username, displayName, password) {
+                if (userExists) {
+                    console.log("e");
+                }
+            }
+            
+            window.logIntoAccount = logIntoAccount;
+            window.createNewAccount = createNewAccount;
+            
         </script>
         <script defer src="functions.js"></script>
         <script defer src="script.js"></script>
