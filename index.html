@@ -10,13 +10,12 @@
         <!-- CSS -->
         <link rel="stylesheet" href="style.css"/>
         
-        <!-- Outfit Font-Family Link -->
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap"
-            rel="stylesheet"
-        />
+        <!-- Fonts -->
+        <style>
+            /* Outfit, Carter One, and Akronim */
+            @import url('https://fonts.googleapis.com/css2?family=Akronim&family=Carter+One&family=Major+Mono+Display&family=Outfit:wght@100..900&display=swap');
+        </style>
+        
     </head>
     <body>
         <!-- Display: None -->
@@ -25,11 +24,13 @@
             <!-- <audio id="a-new-start" src="Audio/A New Start - Thygan Buch.mp3"></audio> -->
 
             <!-- Images -->
-            <!-- <img id="grey-ball" src="Images/greyBall.svg"> -->
+            <!-- <img id="grey-ball" src="Images/greyBall.svg" /> -->
         </section>
 
         <main>
-            <canvas id="game-canvas" width="1000px" height="500px"></canvas>
+            <canvas id="game-canvas" width="1280px" height="720px"></canvas>
+            <input id="username" type="text" autocomplete="off" placeholder="Name" />
+            <input id="password" type="text" autocomplete="off" style="display: none" />
         </main>
         
         <!-- JS -->
