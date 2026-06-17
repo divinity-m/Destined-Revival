@@ -15,6 +15,9 @@ function drawTitleScreen() {
     ctx.fillText("DESTINED REVIVAL", cnv.width*0.5, cnv.height*0.4);
     ctx.strokeText("DESTINED REVIVAL", cnv.width*0.5, cnv.height*0.4);
 
+    // username input
+    
+
     // play button bg
     ctx.fillStyle = "rgb(20, 200, 50)";
     ctx.fillRect(cnv.width*0.35, cnv.height*0.6, cnv.width*0.3, cnv.height*0.1);
