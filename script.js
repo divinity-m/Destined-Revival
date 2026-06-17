@@ -34,7 +34,12 @@ function draw() {
     
 
     // calls the `draw` function again
-    requestAnimationFrame();
+    requestAnimationFrame(draw);
 }
 
 draw();
+
+
+
+
+
