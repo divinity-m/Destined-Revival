@@ -7,6 +7,22 @@ let gameState = "titleScreen";
 let firstUserInteraction = false;
 
 
+// Firebase Setup //
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-analytics.js";
+
+// Check if running in a CI environment with the injected variable
+const configSource = process.env.FIREBASE_CONFIG;
+                
+// The web app's Firebase configuration
+const firebaseConfig = configSource
+            
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+export { app };  
+const analytics = getAnalytics(app);
+
+
 // Global Variables //
 let now = Date.now();
 
@@ -63,8 +79,3 @@ function draw() {
 }
 
 draw();
-
-
-
-
-
