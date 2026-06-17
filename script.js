@@ -12,6 +12,8 @@ let now = Date.now();
 
 let mouse = {
     x: -20, y: -20,
+    pressed: false, over: {},
+    buttonAlpha: 1,
     angleFromPlayer: 0,
     track: false,
 }
@@ -25,6 +27,9 @@ let player = {
 
 // Event Listeners //
 document.addEventListener("mousemove", mousemoveHandler);
+document.addEventListener("click", clickHandler);
+document.addEventListener("mousedown", mousedownHandler);
+document.addEventListener("mouseup", mouseupHandler);
 
 
 // Draw Canvas //
@@ -42,7 +47,12 @@ function draw() {
 
 
     // titleScreen
-    drawTitleScreen();
+    if (gameState === "titleScreen") {
+        drawTitleScreen();
+    }
+    else if (gameState === "inGame") {
+        
+    }
 
 
     // cursor tracking
