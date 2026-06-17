@@ -33,10 +33,7 @@
             <input id="password" type="text" autocomplete="off" style="display: none" />
         </main>
         
-        <!-- JS -->
-        <script defer src="functions.js"></script>
-        <script defer src="script.js"></script>
-
+        <!-- Firebase -->
         <script type="module">
             // Import the functions you need from the SDKs you need
             import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
@@ -60,5 +57,9 @@
             const app = initializeApp(firebaseConfig);
             const analytics = getAnalytics(app);
         </script>
+        
+        <!-- JS -->
+        <script defer src="functions.js"></script>
+        <script defer src="script.js"></script>
     </body>
 </html>
