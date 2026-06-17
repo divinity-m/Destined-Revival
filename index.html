@@ -34,7 +34,29 @@
         </main>
         
         <!-- JS -->
-        <script type="module" src="firebase-init.js"></script>
+        <script type="module">
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+            import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-analytics.js";
+            
+            // The web app's Firebase configuration
+            const firebaseConfig = {
+                apiKey: "AIzaSyDEr6GWFEaZ5qJP1_r4HmlWnr17UBfILXs", 
+                authDomain: "destined-revival.firebaseapp.com",
+                projectId: "destined-revival",
+                storageBucket: "destined-revival.firebasestorage.app",
+                messagingSenderId: "955217871912",
+                appId: "1:955217871912:web:2cd980116310e4151de11d",
+                measurementId: "G-W3S0BR27TQ"
+            }
+            
+            // Initialize Firebase
+            const app = initializeApp(firebaseConfig);
+            export { app };
+            const analytics = getAnalytics(app);
+            
+            window.firebaseApp = app;
+            window.firebaseAnalytics = analytics;
+        </script>
         <script defer src="functions.js"></script>
         <script defer src="script.js"></script>
     </body>
