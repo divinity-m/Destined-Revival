@@ -8,16 +8,7 @@ let firstUserInteraction = false;
 
 
 // Firebase Setup //
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-analytics.js";
-
-// The web app's Firebase configuration
-const firebaseConfig = process.env.FIREBASE_CONFIG;
-            
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-export { app };  
-const analytics = getAnalytics(app);
+// const app = window.userInfo;
 
 
 // Global Variables //
@@ -76,3 +67,8 @@ function draw() {
 }
 
 draw();
+
+
+
+
+
