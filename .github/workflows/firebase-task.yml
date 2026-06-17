@@ -29,4 +29,4 @@ jobs:
         env:
           FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
           FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
-        run: node script.js
+        run: node firebase-init.js
