@@ -28,4 +28,4 @@ jobs:
         # Inject the GitHub Secret into the process.env context
         env:
           FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
-        run: node firebase-init.js
+        run: node functions.js
