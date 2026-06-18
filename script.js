@@ -12,7 +12,7 @@ let now = Date.now();
 
 let signInActivated = false;
 let displayOpacity = 0;
-let [passwordTop, unknownInfoTop] = [46, 69];
+let [passwordTop, errorParaTop] = [46, 69];
 let [accountBtnsY, playBtnY] = [cnv.height*0.5, cnv.height*0.585];
 
 
