@@ -20,10 +20,14 @@ let displayOpacity = 0;
 let accountBtnsY = cnv.height*0.5;
 let playBtnY = cnv.height*0.585;
 
+
 let mouse = {
     x: -20, y: -20,
+    
     pressed: false, over: {},
+    
     angleFromPlayer: 0,
+    
     track: false,
 }
 
@@ -42,7 +46,9 @@ let buttonAlpha = {
 
 let player = {
     x: cnv.width/2, y: cnv.height/2,
+    
     r: 15, facingAngle: 0,
+    
     username: "Soul", password: "",
 }
 
