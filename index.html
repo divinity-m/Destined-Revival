@@ -34,6 +34,7 @@
             <input id="username" class="login-info" type="text" autocomplete="off" placeholder="Username" />
             <input id="display-name" class="login-info" type="text" autocomplete="off" placeholder="Display Name" style="display: none" />
             <input id="password" class="login-info" type="text" autocomplete="off" placeholder="Password" />
+            <p id="unknown-login-info" style="display: none; opacity: 0">unrecongnized information provided</p>
         </main>
         
         <!-- JS -->
@@ -42,7 +43,7 @@
             import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore-lite.js";
 
             // Authenticator SDK
-            import { getAuth, signInAnonymously, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+            import { getAuth, signInAnonymously, signInWithEmailAndPassword, onAuthStateChanged, deleteUser } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
     
             
             // The web app's Firebase configuration
@@ -90,25 +91,60 @@
             // play button functions
             async function logIntoAccount(username, password) {
                 if (userExists) {
-                    const docRef = doc(db, "users", `${username}-${password}`);
+                    const docRef = doc(db, "users", username);
                     const docSnap = await getDoc(docRef);
+
+                    // if the account exists, log into it
                     if (docSnap.exists()) {
-                        console.log("Username:", docSnap.data().username);
-                    } else {
-                        console.log("No such user found!");
+                        if (docSnap.data().password === password) {
+                            console.log("Logged In");
+
+                            window.destinedData = docSnap.data();
+                        }
                     }
+                    window.reactToLoginInfo();
                 }
             }
 
-            async function createNewAccount(username, displayName, password) {
+            async function createNewAccount(username, password, displayName) {
                 if (userExists) {
-                    console.log("e");
+                    const docRef = doc(db, "users", username);
+                    const docSnap = await getDoc(docRef);
+
+                    // check if the account already exists
+                    if (docSnap.exists()) {
+                        console.log("This username is already in use.");
+                    }
+                    else {
+                        // add a new document in the `users` collection
+                        await setDoc(doc(db, "users", username), {
+                            username: username,
+                            password: password,
+                            displayName: displayName,
+                        });
+                        console.log("Account Created");
+                        logIntoAccount(username, password);
+                    }
                 }
             }
             
             window.logIntoAccount = logIntoAccount;
             window.createNewAccount = createNewAccount;
-            
+
+            // deletes anonymous users when they delete the tab
+            ["beforeunload", "unload"].forEach((event) => {
+                window.addEventListener(event, () => {
+                    const user = userExists;
+                    
+                    if (user && user?.isAnonymous) {
+                        deleteUser(user).then(() => {
+                        // Successfully deleted from the Firebase backend
+                        }).catch((error) => {
+                            console.error("Error deleting anonymous user:", error);
+                        });
+                    }
+                })
+            })
         </script>
         <script defer src="functions.js"></script>
         <script defer src="script.js"></script>
