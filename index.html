@@ -34,7 +34,7 @@
             <input id="username" class="login-info" type="text" autocomplete="off" placeholder="Username" />
             <input id="display-name" class="login-info" type="text" autocomplete="off" placeholder="Display Name" style="display: none" />
             <input id="password" class="login-info" type="text" autocomplete="off" placeholder="Password" />
-            <p id="unknown-login-info" style="display: none; opacity: 0">unrecongnized information provided</p>
+            <p id="error-in-login" style="display: none; opacity: 0">unrecongnized information provided</p>
         </main>
         
         <!-- JS -->
@@ -63,9 +63,12 @@
 
             // Initialize Auth
             const auth = getAuth(app);
+
+            // Set up global data storage
+            window.globalData = {};
             
-            // Trigger Email And Password Sign-in when `admin()` is called
-            window.admin = function(email, password) {
+            // Set up a function to trigger email and password sign-in
+            window.globalData.admin = function(email, password) {
                 signInWithEmailAndPassword(auth, email, password).catch((error) => {
                     console.error("Login failed:", error)
                 });
@@ -97,12 +100,16 @@
                     // if the account exists, log into it
                     if (docSnap.exists()) {
                         if (docSnap.data().password === password) {
-                            console.log("Logged In");
-
-                            window.destinedData = docSnap.data();
+                            window.globalData.destinedData = docSnap.data();
+                            globalData.reactToLoginInfo("logged in");
+                        }
+                        else {
+                            globalData.reactToLoginInfo("invalid info");
                         }
                     }
-                    window.reactToLoginInfo();
+                    else {
+                        globalData.reactToLoginInfo("invalid info");
+                    }
                 }
             }
 
@@ -112,9 +119,8 @@
                     const docSnap = await getDoc(docRef);
 
                     // check if the account already exists
-                    if (docSnap.exists()) {
-                        console.log("This username is already in use.");
-                    }
+                    if (docSnap.exists()) globalData.reactToLoginInfo("username exists");
+                    
                     else {
                         // add a new document in the `users` collection
                         await setDoc(doc(db, "users", username), {
@@ -128,8 +134,8 @@
                 }
             }
             
-            window.logIntoAccount = logIntoAccount;
-            window.createNewAccount = createNewAccount;
+            window.globalData.logIntoAccount = logIntoAccount;
+            window.globalData.createNewAccount = createNewAccount;
 
             // deletes anonymous users when they delete the tab
             ["beforeunload", "unload"].forEach((event) => {
