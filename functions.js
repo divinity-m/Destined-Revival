@@ -11,7 +11,7 @@ function mousemoveHandler(e) {
     if (mouse.track) console.log(mouse.x, mouse.y);
 }
 
-function clickHandler(e) {
+function clickHandler() {
     if (gameState === "titleScreen") {
         // log in button
         if (mouse.over.loginBtn) {
@@ -55,17 +55,11 @@ function clickHandler(e) {
             // ends the function if any of the fields are invalid
             if (userInputInvalid || passwordInputInvalid || (displayInputInvalid && signInActivated)) return;
 
-            // attempt to log in / sign in
-            if (signInActivated) {
-                createNewAccount(userIn.value, passIn.value, displayIn.value);
-            } else {
-                logIntoAccount(userIn.value, passIn.value);
-            }
-
-            window.reactToLoginInfo = function() {
+            // define the function for determining log-in logic
+            window.globalData.reactToLoginInfo = function(reaction) {
                 
                 // swap gamestates if the user logs in
-                if (window.destinedData) {
+                if (reaction === "logged in") {
                     gameState = "inGame";
                     [buttonAlpha.play, buttonAlpha.login, buttonAlpha.signin] = [1, 1, 1];
     
@@ -73,14 +67,31 @@ function clickHandler(e) {
                         input.value = "";
                         input.style.display = "none";
                     });
+                    return;
                 }
                     
                 // display a message otherwise
                 else {
-                    const p = document.getElementById("unknown-login-info");
+                    const p = document.getElementById("error-in-login");
+
+                    if (reaction === "invalid info") {
+                        p.innerHTML = "unrecongnized information provided";
+                    }
+                    else if (reaction === "username exists") {
+                        p.innerHTML = "username is already in use";
+                    }
+                    
                     p.style.display = "block";
                     p.style.opacity = 1;
                 }
+                
+            }
+
+            // attempt to log in / sign in
+            if (signInActivated) {
+                globalData.createNewAccount(userIn.value, passIn.value, displayIn.value);
+            } else {
+                globalData.logIntoAccount(userIn.value, passIn.value);
             }
         }
     }
@@ -89,14 +100,14 @@ function clickHandler(e) {
     }
 }
 
-function mousedownHandler(e) {
+function mousedownHandler() {
     mousedown = true;
 }
-function mouseupHandler(e) {
+function mouseupHandler() {
     mousedown = true;
 }
 
-function accountInputHandler(e) {
+function accountInputHandler() {
     if (e.target.style.borderColor != "rgb(255, 255, 255)") {
         e.target.style.setProperty("--ph", "rgba(255, 255, 255, 0.75)");
         e.target.style.borderColor = "rgb(255, 255, 255)";
@@ -128,7 +139,7 @@ function drawTitleScreen() {
     ctx.fillText("DESTINED REVIVAL", cnv.width*0.5, cnv.height*0.345);
     
 
-    // display input, password input, and unknown-login-info paragraph
+    // display input, password input, and error-in-login paragraph
     displayOpacity = signInActivated ? Math.min(displayOpacity + 1/30, 1) : Math.max(displayOpacity - 1/30, 0);
     displayIn.style.opacity = displayOpacity;
     
@@ -137,12 +148,12 @@ function drawTitleScreen() {
     passwordTop = signInActivated ? Math.min(passwordTop + 0.175, 52) : Math.max(passwordTop - 0.25, 46);
     passIn.style.top = passwordTop + "vh";
     
-    const unknownPara = document.getElementById("unknown-login-info");
-    unknownPara.style.opacity = Math.max(0, unknownPara.style.opacity - 0.01);
-    if (unknownPara.style.opacity == 0) unknownPara.style.display = "none";
+    const errorPara = document.getElementById("error-in-login");
+    errorPara.style.opacity = Math.max(0, errorPara.style.opacity - 0.01);
+    if (errorPara.style.opacity == 0) errorPara.style.display = "none";
 
-    unknownInfoTop = signInActivated ? Math.min(unknownInfoTop + 0.3, 75) : Math.max(unknownInfoTop - 0.15, 69);
-    unknownPara.style.top = unknownInfoTop + "vh";
+    errorParaTop = signInActivated ? Math.min(errorParaTop + 0.3, 75) : Math.max(errorParaTop - 0.15, 69);
+    errorPara.style.top = errorParaTop + "vh";
     
 
     // login/signin btn detection
