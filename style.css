@@ -4,6 +4,7 @@ html, body {
   touch-action: none; /* disable gestures like pinch or pan */
   overscroll-behavior: none; /* prevent edge bounce */
   height: 100%;
+  font-family: "Outfit";
 }
 
 #game-canvas {
@@ -63,4 +64,14 @@ html, body {
   top: 52vh;
 }
 
-
+#unknown-login-info {
+  position: absolute;
+  left: 50vw;
+  top: 69vh;
+      
+  color: rgb(200, 0, 0);
+  font-weight: 600;
+  text-align: center;
+    
+  transform: translate(-50%, -50%);
+}
