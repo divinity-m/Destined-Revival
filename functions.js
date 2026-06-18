@@ -27,33 +27,60 @@ function clickHandler(e) {
         
         // clicking the play button
         if (mouse.over.playBtn) {
-            const userInEmpty = userIn.value.trim().length == 0;
-            const displayInEmpty = displayIn.value.trim().length == 0;
-            const passInEmpty = passIn.value.trim().length == 0;
-
             [userIn, displayIn, passIn].forEach((input) => {
+                // check if the field is empty
                 if (input.value.trim().length == 0) {
                     input.style.setProperty("--ph", "rgba(255, 0, 0, 0.5)");
                     input.style.borderColor = "rgb(255, 0, 0)";
                 }
+
+                // check if the field has trailing whitespace
+                else if (input.value.trim() != input.value) {
+                    input.style.setProperty("--ph", "rgba(255, 255, 0, 0.5)");
+                    input.style.borderColor = "rgb(255, 255, 0)";
+                }
             })
-            if (!signInActivated && displayInEmpty) {
+            
+            const displayInputInvalid = displayIn.value.trim().length == 0 || displayIn.value.trim() != displayIn.value;
+
+            // resets the display input field if the sign-in screen isn't open
+            if (!signInActivated && displayInputInvalid) {
                 displayIn.style.setProperty("--ph", "rgba(255, 255, 255, 0.5)");
                 displayIn.style.borderColor = "rgb(255, 255, 255)";
             }
 
-            
-            if (userInEmpty || passInEmpty || (displayInEmpty && signInActivated)) {
-                return;
+            const userInputInvalid = userIn.value.trim().length == 0 || userIn.value.trim() != userIn.value;
+            const passwordInputInvalid = passIn.value.trim().length == 0 || passIn.value.trim() != passIn.value;
+
+            // ends the function if any of the fields are invalid
+            if (userInputInvalid || passwordInputInvalid || (displayInputInvalid && signInActivated)) return;
+
+            // attempt to log in / sign in
+            if (signInActivated) {
+                createNewAccount(userIn.value, passIn.value, displayIn.value);
+            } else {
+                logIntoAccount(userIn.value, passIn.value);
             }
 
-            if (signInActivated) {
-                // some function
-            } else {
-                // some function
+            window.reactToLoginInfo = function() {
+                
+                // swap gamestates if the user logs in
+                if (window.destinedData) {
+                    gameState = "inGame";
+                    [buttonAlpha.play, buttonAlpha.login, buttonAlpha.signin] = [1, 1, 1];
+    
+                    [userIn, displayIn, passIn].forEach((input) => {
+                        input.value = "";
+                        input.style.display = "none";
+                    });
+                }
                     
-                // gameState = "inGame";
-                // buttonAlpha.play = 1;
+                // display a message otherwise
+                else {
+                    const p = document.getElementById("unknown-login-info");
+                    p.style.display = "block";
+                    p.style.opacity = 1;
+                }
             }
         }
     }
@@ -70,13 +97,24 @@ function mouseupHandler(e) {
 }
 
 function accountInputHandler(e) {
-    if (e.target.style.borderColor === "rgb(255, 0, 0)") {
+    if (e.target.style.borderColor != "rgb(255, 255, 255)") {
         e.target.style.setProperty("--ph", "rgba(255, 255, 255, 0.75)");
         e.target.style.borderColor = "rgb(255, 255, 255)";
     }
 }
 
-// Called Every Frame //
+
+// Draw Functions //
+function drawCircle(x, y, r, fill = true) {
+    
+    ctx.beginPath();
+    ctx.arc(x, y, r, Math.PI * 2, 0);
+
+    if (fill) ctx.fill();
+    else ctx.stroke();
+}
+
+
 function drawTitleScreen() {
     // drawTitleScreen(): draws the play button and gets the players username
 
@@ -88,18 +126,24 @@ function drawTitleScreen() {
     ctx.textAlign = "center";
     ctx.strokeText("DESTINED REVIVAL", cnv.width*0.5, cnv.height*0.345);
     ctx.fillText("DESTINED REVIVAL", cnv.width*0.5, cnv.height*0.345);
-
-    // display name display
-    const displayIn = document.getElementById("display-name");
-    const passIn = document.getElementById("password");
     
-    displayOpacity = signInActivated ? Math.min(displayOpacity + 1/24, 1) : Math.max(displayOpacity - 1/24, 0);
+
+    // display input, password input, and unknown-login-info paragraph
+    displayOpacity = signInActivated ? Math.min(displayOpacity + 1/30, 1) : Math.max(displayOpacity - 1/30, 0);
     displayIn.style.opacity = displayOpacity;
     
     if (displayOpacity === 0)  displayIn.style.display = "none";
     
     passwordTop = signInActivated ? Math.min(passwordTop + 0.175, 52) : Math.max(passwordTop - 0.25, 46);
     passIn.style.top = passwordTop + "vh";
+    
+    const unknownPara = document.getElementById("unknown-login-info");
+    unknownPara.style.opacity = Math.max(0, unknownPara.style.opacity - 0.01);
+    if (unknownPara.style.opacity == 0) unknownPara.style.display = "none";
+
+    unknownInfoTop = signInActivated ? Math.min(unknownInfoTop + 0.3, 75) : Math.max(unknownInfoTop - 0.15, 69);
+    unknownPara.style.top = unknownInfoTop + "vh";
+    
 
     // login/signin btn detection
     accountBtnsY = signInActivated ? Math.min(accountBtnsY+1.75, cnv.height*0.565) : Math.max(accountBtnsY-1.5, cnv.height*0.5);
@@ -113,7 +157,7 @@ function drawTitleScreen() {
         mouse.y > accountBtnsY-1.5 && mouse.y < accountBtnsY+cnv.height*0.057+1.5 && gameState === "titleScreen"
     )
 
-    // Log In Button
+    // log in button
     buttonAlpha.modifyAlpha("login", mouse.over.loginBtn);
     ctx.globalAlpha = buttonAlpha.login;
 
@@ -134,7 +178,7 @@ function drawTitleScreen() {
     ctx.globalAlpha = 1;
 
     
-    // Sign In Button
+    // sign in button
     buttonAlpha.modifyAlpha("signin", mouse.over.signinBtn);
     ctx.globalAlpha = buttonAlpha.signin;
 
@@ -186,6 +230,19 @@ function drawTitleScreen() {
     ctx.globalAlpha = 1;
 }
 
+
+
+function drawPlayer() {
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "rgb(0, 0, 0)";
+    drawCircle(player.x, player.y, player.r-1.5, false);
+    
+    ctx.fillStyle = "rgb(255, 255, 255)";
+    drawCircle(player.x, player.y, player.r-1.5);
+}
+
+
+
 function drawCursor() {
     // drawCursor(): tracks the cursor movement by drawing it
 
@@ -193,13 +250,3 @@ function drawCursor() {
     ctx.fillStyle = "rgb(0, 120, 255)";
     drawCircle(mouse.x, mouse.y, 5);
 }
-
-function drawCircle(x, y, r, fill = true) {
-    
-    ctx.beginPath();
-    ctx.arc(x, y, r, Math.PI * 2, 0);
-
-    if (fill) ctx.fill();
-    else ctx.stroke();
-}
-
