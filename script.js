@@ -7,18 +7,13 @@ let gameState = "titleScreen";
 let firstUserInteraction = false;
 
 
-// Firebase Setup //
-// const app = window.userInfo;
-
-
 // Global Variables //
 let now = Date.now();
 
 let signInActivated = false;
-let passwordTop = 46;
 let displayOpacity = 0;
-let accountBtnsY = cnv.height*0.5;
-let playBtnY = cnv.height*0.585;
+let [passwordTop, unknownInfoTop] = [46, 69];
+let [accountBtnsY, playBtnY] = [cnv.height*0.5, cnv.height*0.585];
 
 
 let mouse = {
@@ -48,8 +43,6 @@ let player = {
     x: cnv.width/2, y: cnv.height/2,
     
     r: 15, facingAngle: 0,
-    
-    username: "Soul", password: "",
 }
 
         
@@ -88,7 +81,7 @@ function draw() {
         drawTitleScreen();
     }
     else if (gameState === "inGame") {
-        
+        drawPlayer();
     }
 
 
