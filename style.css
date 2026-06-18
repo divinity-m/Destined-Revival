@@ -64,7 +64,7 @@ html, body {
   top: 52vh;
 }
 
-#unknown-login-info {
+#error-in-login {
   position: absolute;
   left: 50vw;
   top: 69vh;
