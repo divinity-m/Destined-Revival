@@ -15,13 +15,14 @@ let displayOpacity = 0;
 let [passwordTop, errorParaTop] = [46, 69];
 let [accountBtnsY, playBtnY] = [cnv.height*0.5, cnv.height*0.585];
 
+let [wPressed, aPressed, sPressed, dPressed] = [false, false, false, false];
+
+let [mapX, mapY] = [0, 0];
 
 let mouse = {
     x: -20, y: -20,
     
     pressed: false, over: {},
-    
-    angleFromPlayer: 0,
     
     track: false,
 }
@@ -40,9 +41,9 @@ let buttonAlpha = {
 }
 
 let player = {
-    x: cnv.width/2, y: cnv.height/2,
+    x: cnv.width/2, y: cnv.height/2, speed: 4,
     
-    r: 15, facingAngle: 0,
+    r: 16, facingAngle: 0, movingAngle: 0,
 }
 
         
@@ -58,8 +59,11 @@ const displayIn = document.getElementById("display-name");
 const passIn = document.getElementById("password");
 
 [userIn, displayIn, passIn].forEach((input) => {
-    input.addEventListener("input", accountInputHandler);
+    input.addEventListener("input", accountInputsHandler);
 });
+
+document.addEventListener("keydown", keydownHandler);
+document.addEventListener("keyup", keyupHandler);
 
 
 // Draw Canvas //
@@ -81,7 +85,16 @@ function draw() {
         drawTitleScreen();
     }
     else if (gameState === "inGame") {
+        ctx.fillStyle = "black";
+        drawCircle(cnv.width/2 - mapX, cnv.height/2 - mapY, 5);
+        
         drawPlayer();
+        // drawEnemies();
+
+        
+        // collisions();
+        recenterPlayer();
+        playerMovement();
     }
 
 
@@ -93,8 +106,3 @@ function draw() {
 }
 
 draw();
-
-
-
-
-
