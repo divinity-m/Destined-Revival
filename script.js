@@ -7,6 +7,7 @@ let gameState = "titleScreen";
 let firstUserInteraction = false;
 
 
+
 // Global Variables //
 let now = Date.now();
 
@@ -41,10 +42,71 @@ let buttonAlpha = {
 }
 
 let player = {
-    x: cnv.width/2, y: cnv.height/2, speed: 4,
+    x: cnv.width/2, y: cnv.height/2, speed: 10, // normally 4
     
     r: 16, facingAngle: 0, movingAngle: 0,
 }
+
+
+
+// Classes //
+let [groundTiles, blockTiles] = [[], []];
+let typeColorMatchUp = {
+    "void": "rgb(0, 0, 0)",
+    "spawn": "rgb(255, 255, 255)",
+    "dirt": "rgb(145, 100, 67)",
+    "grass": "rgb(74, 185, 88)",
+    "brick floor": "rgb(150, 119, 87)",
+    "stone floor": "rgb(139, 139, 139)",
+    
+    "void wall": "rgb(10, 10, 10)",
+    "wood wall": "rgb(97, 170, 78)",
+    "brick wall": "rgb(81, 48, 39)",
+    "stone wall": "rgb(73, 78, 79)",
+    "brick door": "rgb(133, 102, 55)",
+    "stone door": "rgb(130, 130, 135)",
+}
+
+class GroundTile {
+    constructor(x, y, type) {
+        this.x = x;
+        this.y = y;
+        this.w = 50;
+        this.h = 50;
+
+        this.type = type;
+    }
+
+    draw() {
+        ctx.fillStyle = typeColorMatchUp[this.type];
+        ctx.fillRect(this.x-mapX, this.y-mapY, this.w, this.h);
+    }
+}
+
+
+class BlockTile {
+    constructor(x, y, w, h, type) {
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+
+        this.type = type;
+    }
+
+    draw() {
+        ctx.fillStyle = typeColorMatchUp[this.type];
+        ctx.fillRect(this.x-mapX, this.y-mapY, this.w, this.h);
+    }
+
+    collide() {
+        
+    }
+}
+
+setUpGroundTiles();
+setUpBlockTiles();
+
 
         
 // Event Listeners //
@@ -66,6 +128,7 @@ document.addEventListener("keydown", keydownHandler);
 document.addEventListener("keyup", keyupHandler);
 
 
+
 // Draw Canvas //
 function draw() {
     // draw(): draws everything in the canvas
@@ -75,9 +138,17 @@ function draw() {
     ctx.clearRect(0, 0, cnv.width, cnv.height);
 
     
-    // background
+    // ground
     ctx.fillStyle = "rgb(69, 173, 89)";
     ctx.fillRect(0, 0, cnv.width, cnv.height);
+
+    
+    ctx.fillStyle = "rgb(74, 185, 88)";
+    ctx.fillRect(-26*50 - mapX, -15*50 - mapY, 78*50, 1450 + 750);
+
+    // tiling
+    drawGroundTiles();
+    drawBlockTiles();
 
 
     // titleScreen
@@ -85,9 +156,6 @@ function draw() {
         drawTitleScreen();
     }
     else if (gameState === "inGame") {
-        ctx.fillStyle = "black";
-        drawCircle(cnv.width/2 - mapX, cnv.height/2 - mapY, 5);
-        
         drawPlayer();
         // drawEnemies();
 
