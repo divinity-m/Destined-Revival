@@ -67,6 +67,8 @@ function clickHandler() {
                 if (reaction === "logged in") {
                     gameState = "inGame";
                     [buttonAlpha.play, buttonAlpha.login, buttonAlpha.signin] = [1, 1, 1];
+
+                    [player.x, player.y] = [cnv.width/2, cnv.height/2];
     
                     [userIn, displayIn, passIn].forEach((input) => {
                         input.value = "";
@@ -168,6 +170,14 @@ function drawCircle(x, y, r, fill = true) {
     else ctx.stroke();
 }
 
+
+function drawCursor() {
+    // drawCursor(): tracks the cursor movement by drawing it
+
+    // cursor
+    ctx.fillStyle = "rgb(0, 120, 255)";
+    drawCircle(mouse.x, mouse.y, 5);
+}
 
 
 function drawTitleScreen() {
@@ -324,15 +334,21 @@ function drawPlayer() {
 }
 
 
-
-function drawCursor() {
-    // drawCursor(): tracks the cursor movement by drawing it
-
-    // cursor
-    ctx.fillStyle = "rgb(0, 120, 255)";
-    drawCircle(mouse.x, mouse.y, 5);
+function drawGroundTiles() {
+    for (let i in groundTiles) {
+        let tile = groundTiles[i];
+        
+        tile.draw();
+    }
 }
-
+function drawBlockTiles() {
+    for (let i in blockTiles) {
+        let tile = blockTiles[i];
+        
+        tile.draw();
+        tile.collide();
+    }
+}
     
 
 
@@ -404,6 +420,67 @@ function recenterPlayer() {
         mapY -= dy/dist * speed;
     }
 }
+
+
+
+// Single Process Functions
+function setUpGroundTiles() {
+    // the house's floor
+    let len = 7;
+    
+    for (let i = 0; i < len*len; i++) {
+        const tileX = (cnv.width/2 - (len*50)/2) + (i%len) * 50;
+        const tileY = (cnv.height/2 - (len*50)/2) + Math.floor(i/len) * 50;
+        
+        const tile = new GroundTile(tileX, tileY, "brick floor");
+
+        groundTiles.push(tile);
+    }
+
+    groundTiles.push(new GroundTile(cnv.width/2 - 25, cnv.height/2 - 25, "spawn"));
+}
+
+function setUpBlockTiles() {
+    // cnv.width/50 = 25.6  |  cnv.height/50 = 14.4
+    
+    // top and bottom borders
+    for (let i = 0; i < 26*3; i++) {
+        const topBorderTile = new BlockTile(-26*50 + i*50, -15*50, 50, 50, "void wall");
+        
+        const bottomBorderTile = new BlockTile(-26*50 + i*50, cnv.height + 15*50 - 20, 50, 50, "void wall");
+
+        blockTiles.push(topBorderTile, bottomBorderTile);
+    }
+
+    // left and right borders
+    for (let i = 1; i < 15*3 - 1; i++) {
+        const leftBorderTile = new BlockTile(-26*50, -15*50 + i*50, 50, 50, "void wall");
+        
+        const rightBorderTile = new BlockTile(51*50, -15*50 + i*50, 50, 50, "void wall");
+
+        blockTiles.push(leftBorderTile, rightBorderTile);
+    }
+
+    // the house's walls
+    let len = 7;
+    
+    for (let i = 0; i < len; i++) {
+        const tileX = cnv.width/2 - (len*50)/2;
+        const tileY = cnv.height/2 - (len*50)/2;
+        
+        const topHouseTile = new BlockTile(tileX + i*50, tileY, 50, 50, "brick wall");
+        const bottomHouseTile = new BlockTile(tileX + i*50, tileY + (len-1)*50, 50, 50, "brick wall");
+
+        const leftHouseTile = new BlockTile(tileX, tileY + i*50, 50, 50, "brick wall");
+        
+        let rightHouseTile;
+        if (i != Math.floor(len/2)) rightHouseTile = new BlockTile(tileX + (len-1)*50, tileY + i*50, 50, 50, "brick wall");
+        else rightHouseTile = new BlockTile(tileX + (len-1)*50 + 12.5, tileY + i*50, 25, 50, "brick door");
+
+        blockTiles.push(topHouseTile, bottomHouseTile, leftHouseTile, rightHouseTile);
+    }
+}
+
 
 
 
