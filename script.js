@@ -53,7 +53,7 @@ let player = {
 let [groundTiles, blockTiles] = [[], []];
 let typeColorMatchUp = {
     "void": "rgb(0, 0, 0)",
-    "spawn": "rgb(255, 255, 255)",
+    "spawn": "rgba(220, 220, 220, 0.8)",
     "dirt": "rgb(145, 100, 67)",
     "grass": "rgb(74, 185, 88)",
     "brick floor": "rgb(150, 119, 87)",
