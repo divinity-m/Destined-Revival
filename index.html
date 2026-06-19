@@ -85,7 +85,8 @@
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     userExists = user;
-                    console.log("Logged into the database. User UID:", user.uid);
+                    console.log("Logged into the database.");
+                    // console.log("Logged into the database. User UID:", user.uid);
                 } else {
                     console.log("User is signed out.");
                 }
