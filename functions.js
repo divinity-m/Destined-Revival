@@ -2,16 +2,21 @@
 
 // Handlers //
 function mousemoveHandler(e) {
+    // get the ratios of the canvas's dimensions to the windows dimensions
     const scaleX = cnv.width/window.innerWidth;
     const scaleY = cnv.height/window.innerHeight;
 
+    // get the mouse's client coordinates and multiply them by the canvas:window ratio
     mouse.x = e.clientX * scaleX;
     mouse.y = e.clientY * scaleY;
-    
     if (mouse.track) console.log(mouse.x, mouse.y);
+
+    getPlayerFacingAngle();
 }
 
 function clickHandler() {
+    firstUserInteraction = true;
+    
     if (gameState === "titleScreen") {
         // log in button
         if (mouse.over.loginBtn) {
@@ -86,7 +91,7 @@ function clickHandler() {
                 }
                 
             }
-
+            
             // attempt to log in / sign in
             if (signInActivated) {
                 globalData.createNewAccount(userIn.value, passIn.value, displayIn.value);
@@ -104,10 +109,10 @@ function mousedownHandler() {
     mousedown = true;
 }
 function mouseupHandler() {
-    mousedown = true;
+    mousedown = false;
 }
 
-function accountInputHandler() {
+function accountInputsHandler() {
     if (e.target.style.borderColor != "rgb(255, 255, 255)") {
         e.target.style.setProperty("--ph", "rgba(255, 255, 255, 0.75)");
         e.target.style.borderColor = "rgb(255, 255, 255)";
@@ -115,15 +120,54 @@ function accountInputHandler() {
 }
 
 
+function keydownHandler(e) {
+    if (e.code === "KeyW" || e.code === "ArrowUp") {
+        wPressed = true;
+    }
+    
+    if (e.code === "KeyA" || e.code === "ArrowLeft") {
+        aPressed = true;
+    }
+    
+    if (e.code === "KeyS" || e.code === "ArrowDown") {
+        sPressed = true;
+    }
+    
+    if (e.code === "KeyD" || e.code === "ArrowRight") {
+        dPressed = true;
+    }
+}
+
+
+function keyupHandler(e) {
+    if (e.code === "KeyW" || e.code === "ArrowUp") {
+        wPressed = false;
+    }
+    
+    if (e.code === "KeyA" || e.code === "ArrowLeft") {
+        aPressed = false;
+    }
+    
+    if (e.code === "KeyS" || e.code === "ArrowDown") {
+        sPressed = false;
+    }
+    
+    if (e.code === "KeyD" || e.code === "ArrowRight") {
+        dPressed = false;
+    }
+}
+
+    
+
 // Draw Functions //
 function drawCircle(x, y, r, fill = true) {
-    
     ctx.beginPath();
     ctx.arc(x, y, r, Math.PI * 2, 0);
 
     if (fill) ctx.fill();
     else ctx.stroke();
 }
+
 
 
 function drawTitleScreen() {
@@ -181,7 +225,7 @@ function drawTitleScreen() {
 
     
     ctx.fillStyle = "white";
-    ctx.font = "35px Akronim"
+    ctx.font = "35px Akronim";
     ctx.textAlign = "center";
     
     ctx.fillText("Log In", cnv.width*0.44, accountBtnsY+cnv.height*0.04);
@@ -203,7 +247,7 @@ function drawTitleScreen() {
 
     
     ctx.fillStyle = "white";
-    ctx.font = "35px Akronim"
+    ctx.font = "35px Akronim";
     ctx.textAlign = "center";
 
     ctx.fillText("Sign In", cnv.width*0.56, accountBtnsY+cnv.height*0.04);
@@ -234,7 +278,7 @@ function drawTitleScreen() {
 
     // play button text
     ctx.fillStyle = "white";
-    ctx.font = "500 70px Akronim"
+    ctx.font = "500 70px Akronim";
     ctx.textAlign = "center";
     ctx.fillText("LIVE", cnv.width*0.5, playBtnY+cnv.height*0.085);
     
@@ -244,12 +288,39 @@ function drawTitleScreen() {
 
 
 function drawPlayer() {
+    // player name
+    ctx.font = "35px Akronim";
+    ctx.textAlign = "center";
+
     ctx.lineWidth = 3;
     ctx.strokeStyle = "rgb(0, 0, 0)";
-    drawCircle(player.x, player.y, player.r-1.5, false);
-    
+    ctx.strokeText(globalData.destinedData.displayName, player.x, player.y - player.r*2);
+
     ctx.fillStyle = "rgb(255, 255, 255)";
-    drawCircle(player.x, player.y, player.r-1.5);
+    ctx.fillText(globalData.destinedData.displayName, player.x, player.y - player.r*2);
+
+
+    // rotate the player towards the location of the cursor
+    ctx.save();
+    ctx.translate(player.x, player.y);
+    ctx.rotate(player.facingAngle);
+
+
+    // player outline
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgb(198, 134, 66)";
+    drawCircle(0, 0, player.r - 1, false); // head
+    drawCircle(0 + player.r*1.2, 0 - player.r*1.2, player.r*0.35, false); // left/top hand
+    drawCircle(0 + player.r*1.2, 0 + player.r*1.2, player.r*0.35, false); // right/bottom hand
+
+    // player fill
+    ctx.fillStyle = "rgb(241, 194, 125)";
+    drawCircle(0, 0, player.r - 1.5);
+    drawCircle(0 + player.r*1.2, 0 - player.r*1.2, player.r*0.35 - 0.45); // left/top hand
+    drawCircle(0 + player.r*1.2, 0 + player.r*1.2, player.r*0.35 - 0.45); // right/bottom hand
+
+
+    ctx.restore();
 }
 
 
@@ -261,3 +332,78 @@ function drawCursor() {
     ctx.fillStyle = "rgb(0, 120, 255)";
     drawCircle(mouse.x, mouse.y, 5);
 }
+
+    
+
+
+// Continuous Process Functions //
+function getPlayerFacingAngle() {
+    const dx = mouse.x - player.x;
+    const dy = mouse.y - player.y;
+    player.facingAngle = Math.atan2(dy, dx);
+}
+
+
+function playerMovement() {
+    let [dx, dy] = [0, 0]
+
+    // determine the direction the player is moving in
+    if (wPressed) dy--;
+    
+    if (aPressed) dx--;
+
+    if (sPressed) dy++;
+    
+    if (dPressed) dx++;
+
+    // account for diagonal movement
+    if (dx != 0 && dy != 0) {
+        dx *= Math.SQRT1_2;
+        dy *= Math.SQRT1_2;
+    }
+
+    // limit the distance the player can move from the center
+    const dxCenter = cnv.width/2 - player.x;
+    const dyCenter = cnv.height/2 - player.y;
+    const distCenter = Math.hypot(dxCenter, dyCenter);
+
+    const limit = 1 - (distCenter / 20);
+    
+    const speed = player.speed;
+
+    const moveX = dx * speed;
+    const moveY = dy * speed;
+
+    // update the player and map coordinates
+    player.x += moveX * limit;
+    player.y += moveY * limit;
+
+    mapX += moveX;
+    mapY += moveY;
+
+    getPlayerFacingAngle();
+}
+
+
+function recenterPlayer() {
+    // recenterPlayer(): pulls the player back the to center of the screen when they move
+
+    // get the distance to the center of the screen
+    const dx = cnv.width/2 - player.x;
+    const dy = cnv.height/2 - player.y;
+    const dist = Math.hypot(dx, dy);
+
+    // move the player once they pass a certain distance
+    if (dist > 1) {
+        const speed = player.speed * 0.2;
+        
+        player.x += dx/dist * speed;
+        player.y += dy/dist * speed;
+   
+        mapX -= dx/dist * speed;
+        mapY -= dy/dist * speed;
+    }
+}
+
+
+
