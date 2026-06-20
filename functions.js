@@ -138,6 +138,13 @@ function keydownHandler(e) {
     if (e.code === "KeyD" || e.code === "ArrowRight") {
         dPressed = true;
     }
+
+    if (e.code === "Space") {
+        for (let i in blockTiles) {
+            const tile = blockTiles[i];
+            if (tile.interactable) tile.interactionEvent();
+        }
+    }
 }
 
 
@@ -342,11 +349,17 @@ function drawGroundTiles() {
     }
 }
 function drawBlockTiles() {
+    player.leftCollision = false;
+    player.rightCollision = false;
+    player.topCollision = false;
+    player.bottomCollision = false;
+    
     for (let i in blockTiles) {
         let tile = blockTiles[i];
         
         tile.draw();
         tile.collide();
+        tile.drawDoorOptions();
     }
 }
     
@@ -364,13 +377,13 @@ function playerMovement() {
     let [dx, dy] = [0, 0]
 
     // determine the direction the player is moving in
-    if (wPressed) dy--;
+    if (wPressed && !player.bottomCollision) dy--;
     
-    if (aPressed) dx--;
+    if (aPressed && !player.rightCollision) dx--;
 
-    if (sPressed) dy++;
+    if (sPressed && !player.topCollision) dy++;
     
-    if (dPressed) dx++;
+    if (dPressed && !player.leftCollision) dx++;
 
     // account for diagonal movement
     if (dx != 0 && dy != 0) {
@@ -383,7 +396,7 @@ function playerMovement() {
     const dyCenter = cnv.height/2 - player.y;
     const distCenter = Math.hypot(dxCenter, dyCenter);
 
-    const limit = 1 - (distCenter / 20);
+    const limit = Math.max(1 - (distCenter / 20), 0.1);
     
     const speed = player.speed;
 
@@ -432,9 +445,9 @@ function setUpGroundTiles() {
         const tileX = (cnv.width/2 - (len*50)/2) + (i%len) * 50;
         const tileY = (cnv.height/2 - (len*50)/2) + Math.floor(i/len) * 50;
         
-        const tile = new GroundTile(tileX, tileY, "brick floor");
+        const brickFloorTile = new GroundTile(tileX, tileY, "brick floor");
 
-        groundTiles.push(tile);
+        groundTiles.push(brickFloorTile);
     }
 
     groundTiles.push(new GroundTile(cnv.width/2 - 25, cnv.height/2 - 25, "spawn"));
@@ -475,7 +488,7 @@ function setUpBlockTiles() {
         
         let rightHouseTile;
         if (i != Math.floor(len/2)) rightHouseTile = new BlockTile(tileX + (len-1)*50, tileY + i*50, 50, 50, "brick wall");
-        else rightHouseTile = new BlockTile(tileX + (len-1)*50 + 12.5, tileY + i*50, 25, 50, "brick door");
+        else rightHouseTile = new BlockTile(tileX + (len-1)*50 + 12.5, tileY + i*50, 25, 50, "vertical brick door");
 
         blockTiles.push(topHouseTile, bottomHouseTile, leftHouseTile, rightHouseTile);
     }
