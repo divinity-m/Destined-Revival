@@ -42,7 +42,9 @@ let buttonAlpha = {
 }
 
 let player = {
-    x: cnv.width/2, y: cnv.height/2, speed: 10, // normally 4
+    x: cnv.width/2, y: cnv.height/2, speed: 4,
+    
+    leftCollision: false, rightCollision: false, topCollision: false, bottomCollision: false,
     
     r: 16, facingAngle: 0, movingAngle: 0,
 }
@@ -92,15 +94,97 @@ class BlockTile {
         this.h = h;
 
         this.type = type;
+        this.interactable = false;
     }
 
     draw() {
-        ctx.fillStyle = typeColorMatchUp[this.type];
+        let type = this.type;
+        
+        if (this.type.includes("vertical") || this.type.includes("horizontal")) {
+            type = type.split(" ");
+            type.shift();
+            type = type.join(" ");
+        }
+            
+        ctx.fillStyle = typeColorMatchUp[type];
         ctx.fillRect(this.x-mapX, this.y-mapY, this.w, this.h);
     }
 
     collide() {
+        const hitRadius = player.r * 1.35;
+        const bitRadius = player.r * 0.95;
+        const [blockX, blockY] = [this.x - mapX, this.y - mapY];
+
+        const betweenBlockY = player.y + bitRadius > blockY && player.y - bitRadius < blockY + this.h;
+        const betweenBlockX = player.x + bitRadius > blockX && player.x - bitRadius < blockX + this.w;
+
+        // when the player holds "d" and runs right into the left of the block
+        const leftSideCollision = player.x + hitRadius > blockX && player.x + hitRadius < blockX + hitRadius && betweenBlockY;
+        if (leftSideCollision) player.leftCollision = true;
+
+        // when the player holds "a" and runs left into the right of the block
+        const rightSideCollision = player.x - hitRadius > blockX+this.w - hitRadius && player.x - hitRadius < blockX+this.w && betweenBlockY;
+        if (rightSideCollision) player.rightCollision = true;
+
+        // when the player holds "s" and runs down into the top of the block
+        const collisionOnTop = player.y + hitRadius > blockY && player.y + hitRadius < blockY + hitRadius && betweenBlockX;
+        if (collisionOnTop) player.topCollision = true;
+
+        // when the player holds "w" and runs up into the bottom of the block
+        const collisionOnTheBottom = player.y - hitRadius > blockY+this.h - hitRadius && player.y - hitRadius < blockY+this.h && betweenBlockX;
+        if (collisionOnTheBottom) player.bottomCollision = true;
+    }
+
+    drawDoorOptions() {
+        // BlockTile.drawDoorOptions(): If the tile is a door and the player is near it, this function will draw a text box which tells the player to press "space" to pass through the door
+
+        if (this.type.includes("door")) {
+            // get the distance from the player to the door
+            const doorXCenter = this.x-mapX + this.w/2;
+            const doorYCenter = this.y-mapY + this.h/2;
+
+            const distanceFromDoor = Math.hypot(player.x - doorXCenter, player.y - doorYCenter);
+
+            // the distance requirement should be the size of the doors largest dimension
+            const maxLength = this.h > this.w ? this.h : this.w;
+
+            if (distanceFromDoor < maxLength*1.2) {
+                // draw the doors text box
+                ctx.fillStyle = "rgba(100, 100, 100, 0.5)";
+                ctx.fillRect(cnv.width/3, cnv.height*0.85, cnv.width/2 - cnv.width/6, cnv.height*0.1);
+
+                ctx.fillStyle = "rgba(255, 255, 255, 0.75)";
+                ctx.font = "25px 'Carter One'";
+                ctx.textAlign = "center";
+                ctx.fillText("Press space to use the door.", cnv.width*0.5, cnv.height*0.91);
+
+                this.interactable = true;
+            }
+            else this.interactable = false;
+        }
+    }
+
+    interactionEvent() {
+        // BlockTile.interactionEvent(): If the tile is interactable, the event enacted when "space" is pressed happens in this function
         
+        if (this.type.includes("vertical") && this.type.includes("door")) {
+            
+            if (player.x < this.x-mapX) player.x = this.x-mapX + this.w + player.r*2;
+
+            else if (player.x > this.x-mapX + this.w) player.x = this.x-mapX - player.r*2;
+
+            player.y = this.y-mapY + this.h/2;
+        }
+            
+        else if (this.type.includes("horizontal") && this.type.includes("door")) {
+            if (player.y < this.y-mapY) {
+                console.log("from the top of the door");
+            }
+
+            else if (player.y > this.y-mapY + this.h) {
+                console.log("from the bottom of the door");
+            }
+        }
     }
 }
 
