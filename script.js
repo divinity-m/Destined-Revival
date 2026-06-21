@@ -4,12 +4,13 @@
 const cnv = document.getElementById("game-canvas");
 const ctx = cnv.getContext("2d");
 let gameState = "titleScreen";
-let firstUserInteraction = false;
 
 
 
 // Global Variables //
 let now = Date.now();
+
+let interactionWithPage = false;
 
 let signInActivated = false;
 let displayOpacity = 0;
@@ -19,6 +20,9 @@ let [accountBtnsY, playBtnY] = [cnv.height*0.5, cnv.height*0.585];
 let [wPressed, aPressed, sPressed, dPressed] = [false, false, false, false];
 
 let [mapX, mapY] = [0, 0];
+
+const audioElements = document.getElementsByTagName("audio");
+let currentSong;
 
 let mouse = {
     x: -20, y: -20,
@@ -49,7 +53,23 @@ let player = {
     r: 16, facingAngle: 0, movingAngle: 0,
 }
 
+const songAnimation = {
+    active: false,
 
+    x: -300, y: cnv.height - 25,
+
+    alpha: 0, fadeIn: true,
+
+    content: "♬ Done With Pain - Thygan Buch",
+
+    reset() {
+        this.active = false;
+        this.x = -300;
+        this.y = cnv.height - 25;
+        this.alpha = 0;
+        this.fadeIn = true;
+    }
+}
 
 // Classes //
 let [groundTiles, blockTiles] = [[], []];
@@ -195,10 +215,12 @@ setUpBlockTiles();
         
 // Event Listeners //
 document.addEventListener("mousemove", mousemoveHandler);
-document.addEventListener("click", clickHandler);
+document.addEventListener("click", () => {
+    interactionWithPage = true;
+    clickHandler();
+});
 document.addEventListener("mousedown", mousedownHandler);
 document.addEventListener("mouseup", mouseupHandler);
-
 
 const userIn = document.getElementById("username");
 const displayIn = document.getElementById("display-name");
@@ -211,6 +233,23 @@ const passIn = document.getElementById("password");
 document.addEventListener("keydown", keydownHandler);
 document.addEventListener("keyup", keyupHandler);
 
+for (let i = 0; i < audioElements.length; i++) {
+    const audioEl = audioElements[i];
+    const nextIndex = i === audioElements.length-1 ? 0 : i + 1;
+    
+    audioEl.addEventListener("ended", () => {
+        songAnimation.reset();
+        currentSong = audioElements[nextIndex];
+        currentSong.play();
+    });
+
+    audioEl.addEventListener("playing", () => {
+        currentSong = audioEl;
+        songAnimation.reset();
+        songAnimation.active = true;
+        songAnimation.content = "♬ " + audioEl.dataset.credit;
+    });
+}
 
 
 // Draw Canvas //
@@ -249,6 +288,8 @@ function draw() {
         playerMovement();
     }
 
+    // music animation popup
+    drawSongAnimation();
 
     // cursor tracking
     /* drawCursor(); */
