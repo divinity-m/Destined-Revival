@@ -15,8 +15,6 @@ function mousemoveHandler(e) {
 }
 
 function clickHandler() {
-    firstUserInteraction = true;
-    
     if (gameState === "titleScreen") {
         // log in button
         if (mouse.over.loginBtn) {
@@ -26,7 +24,7 @@ function clickHandler() {
         // sign in button
         if (mouse.over.signinBtn) {
             signInActivated = true;
-            displayIn.style.display = "block";
+            displayIn.style.display = "inline";
         }
         
         
@@ -65,16 +63,21 @@ function clickHandler() {
                 
                 // swap gamestates if the user logs in
                 if (reaction === "logged in") {
+                    if (gameState === "inGame") return;
+                    
                     gameState = "inGame";
-                    [buttonAlpha.play, buttonAlpha.login, buttonAlpha.signin] = [1, 1, 1];
-
-                    [player.x, player.y] = [cnv.width/2, cnv.height/2];
     
+                    // reset necessary variables
+                    [buttonAlpha.play, buttonAlpha.login, buttonAlpha.signin] = [1, 1, 1];
+                    [player.x, player.y] = [cnv.width/2, cnv.height/2];
+                    
                     [userIn, displayIn, passIn].forEach((input) => {
                         input.value = "";
                         input.style.display = "none";
                     });
-                    return;
+
+                    // play a random song
+                    if (interactionWithPage) audioElements[Math.floor(Math.random() * audioElements.length)].play();
                 }
                     
                 // display a message otherwise
@@ -88,7 +91,7 @@ function clickHandler() {
                         p.innerHTML = "username is already in use";
                     }
                     
-                    p.style.display = "block";
+                    p.style.display = "inline";
                     p.style.opacity = 1;
                 }
                 
@@ -103,7 +106,12 @@ function clickHandler() {
         }
     }
     else if (gameState === "inGame") {
-        
+        // literally only for auto-login
+        let nothingPlaying = true;
+        for (let audio of audioElements) {
+            if (!audio.paused) nothingPlaying = false;
+        }
+        if (nothingPlaying) audioElements[Math.floor(Math.random() * audioElements.length)].play();
     }
 }
 
@@ -362,7 +370,33 @@ function drawBlockTiles() {
         tile.drawDoorOptions();
     }
 }
-    
+
+
+function drawSongAnimation() {
+    if (songAnimation.active) {
+        ctx.font = "20px 'Carter One'";
+        ctx.textAlign = "left";
+        ctx.lineWidth = 2;
+        
+        ctx.strokeStyle = `rgba(0, 0, 0, ${songAnimation.alpha})`;
+        ctx.strokeText(songAnimation.content, songAnimation.x, songAnimation.y);
+
+            
+        ctx.fillStyle = `rgba(255, 255, 255, ${songAnimation.alpha})`;
+        ctx.fillText(songAnimation.content, songAnimation.x, songAnimation.y);
+
+        const distFromX = 31 - songAnimation.x;
+        songAnimation.x = Math.min(songAnimation.x + distFromX/30, 30);
+        
+        songAnimation.alpha = songAnimation.fadeIn ? songAnimation.alpha + 0.015 : songAnimation.alpha - 0.03;
+        if (songAnimation.alpha >= 5.5) {
+            songAnimation.fadeIn = false;
+            songAnimation.alpha = 1.1;
+        }
+
+        if (!songAnimation.fadeIn && songAnimation.alpha <= 0) songAnimation.reset();
+    }
+}
 
 
 // Continuous Process Functions //
