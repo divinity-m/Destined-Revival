@@ -21,8 +21,17 @@
         <!-- Display: None -->
         <section style="display: none">
             <!-- Audio -->
-            <audio id="done-with-pain" src="Audio/Done With Pain - Thygan Buch.mp3"></audio>
-            <audio id="remember" src="Audio/Remember -  SoundUniverseStudio from Pixabay.mp3"></audio>
+            <audio
+                id="done-with-pain"
+                src="Audio/Done With Pain - Thygan Buch.mp3"
+                data-credit="Done With Pain - Thygan Buch">
+            </audio>
+            
+            <audio
+                id="remember"
+                src="Audio/Remember -  SoundUniverseStudio from Pixabay.mp3"
+                data-credit="Remember - SoundUniverseStudio from Pixabay">
+            </audio>
 
             <!-- Images -->
             <!-- <img id="grey-ball" src="Images/greyBall.svg" /> -->
@@ -36,6 +45,9 @@
             <input id="display-name" class="login-info" type="text" autocomplete="off" placeholder="Display Name" style="display: none" />
             <input id="password" class="login-info" type="text" autocomplete="off" placeholder="Password" />
             <p id="error-in-login" style="display: none; opacity: 0">unrecongnized information provided</p>
+            
+            <!-- Drop Items Input -->
+            <input id="drop-amount" type="number" autocomplete="off" placeholder="Enter Number Of Items" style="display: none;"/>
         </main>
         
         <!-- JS -->
