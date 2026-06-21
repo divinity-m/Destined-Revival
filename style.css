@@ -18,9 +18,11 @@ html, body {
   user-select: none; /* same as above */
 }
 
-.login-info {
-  display: inline;
+input {
   position: absolute;
+}
+
+.login-info {
   z-index: 2;
   transform: translate(-50%, -50%);
     
