@@ -294,8 +294,23 @@ function draw() {
     // cursor tracking
     /* drawCursor(); */
 
-    // calls the `draw` function again
-    requestAnimationFrame(draw);
 }
 
-draw();
+// Limit FPS //
+const fps = 100;
+let lastTime = performance.now();
+
+function limitRefreshRate() {
+    const currentTime = performance.now();
+    const timeDifferenceMS = currentTime - lastTime;
+
+    if (timeDifferenceMS/1000 > 1/fps) {
+        draw();
+        lastTime = currentTime;
+    }
+
+    
+    requestAnimationFrame(limitRefreshRate);
+}
+
+limitRefreshRate();
