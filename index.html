@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
         <title>Destined Revival</title>
-        <!-- <link rel="icon" type="image/x-icon" href="Images/greyBall.svg" /> -->
+        <link rel="icon" type="image/x-icon" href="Images/karmaslayers face.svg" />
 
         <!-- CSS -->
         <link rel="stylesheet" href="style.css"/>
@@ -26,7 +26,6 @@
                 src="Audio/Done With Pain - Thygan Buch.mp3"
                 data-credit="Done With Pain - Thygan Buch">
             </audio>
-            
             <audio
                 id="remember"
                 src="Audio/Remember - SoundUniverseStudio from Pixabay.mp3"
@@ -34,7 +33,7 @@
             </audio>
 
             <!-- Images -->
-            <!-- <img id="grey-ball" src="Images/greyBall.svg" /> -->
+            <img id="placeholder-image" src="Images/placeholder.svg" />
         </section>
 
         <main>
@@ -97,6 +96,17 @@
             // Wait for the user to be authenticated before running Firestore queries
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
+                    // delete the previous user if it was anonymous
+                    if (userExists) {
+                        if (userExists.uid !== user.uid && userExists.isAnonymous) {
+                            deleteUser(user).then(() => {
+                            // Successfully deleted from the Firebase backend
+                            }).catch((error) => {
+                                console.error("Error deleting anonymous user:", error);
+                            });
+                        }
+                    }
+                    
                     userExists = user;
                     console.log("Logged into the database.");
                     // console.log("Logged into the database. User UID:", user.uid);
