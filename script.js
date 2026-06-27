@@ -24,36 +24,7 @@ let [mapX, mapY] = [0, 0];
 const audioElements = document.getElementsByTagName("audio");
 let currentSong;
 
-let mouse = {
-    x: -20, y: -20,
-    
-    pressed: false, over: {},
-    
-    track: false,
-}
-
-let buttonAlpha = {
-    play: 1, login: 1, signin: 1,
-    
-    modifyAlpha(property, mouseOver) {
-        if (mouseOver) {
-            this[property] = Math.max(0.75, this[property] - 0.025);
-        }
-        else {
-            this[property] = Math.min(1, this[property] + 0.025);
-        }
-    },
-}
-
-let player = {
-    x: cnv.width/2, y: cnv.height/2, speed: 4,
-    
-    leftCollision: false, rightCollision: false, topCollision: false, bottomCollision: false,
-    
-    r: 16, facingAngle: 0, movingAngle: 0,
-}
-
-const songAnimation = {
+let songAnimation = {
     active: false,
 
     x: -300, y: cnv.height - 25,
@@ -68,6 +39,60 @@ const songAnimation = {
         this.y = cnv.height - 25;
         this.alpha = 0;
         this.fadeIn = true;
+    }
+}
+
+let mouse = {
+    x: -20, y: -20,
+    
+    pressed: false, over: {},
+    
+    track: false,
+}
+
+let buttonAlpha = {
+    play: 1, login: 1, signin: 1, inv: 1,
+    
+    modifyAlpha(property, mouseOver) {
+        if (mouseOver) {
+            this[property] = Math.max(0.75, this[property] - 0.025);
+        }
+        else {
+            this[property] = Math.min(1, this[property] + 0.025);
+        }
+        return this[property];
+    },
+}
+
+let player = {
+    x: 650, y: 350, speed: 14,
+    
+    leftCollision: false, rightCollision: false, topCollision: false, bottomCollision: false,
+    
+    r: 16, facingAngle: 0, movingAngle: 0,
+
+    hotbar: [], inventory: [], invOpen: false, hotbarSlot: 1,
+
+    strength: 1,
+}
+for (let i = 0; i < 9; i++) player.hotbar.push(0);
+for (let i = 0; i < 25; i++) player.inventory.push(0);
+
+let mobs = {
+    freeroam: [], alter: [],
+    lastSpawned: 0,
+}
+
+let m1 = {
+    active: false,
+
+    state: "retracting", hitting: false,
+
+    lx: 0, rx: 0, ry: 0,
+
+    reset() {
+        this.active = false;
+        this.state = "retracting";
     }
 }
 
@@ -100,7 +125,11 @@ class GroundTile {
     }
 
     draw() {
-        ctx.fillStyle = typeColorMatchUp[this.type];
+        let type = this.type;
+
+        if (this.type.includes("spawn")) type = "spawn";
+        
+        ctx.fillStyle = typeColorMatchUp[type];
         ctx.fillRect(this.x-mapX, this.y-mapY, this.w, this.h);
     }
 }
@@ -131,7 +160,7 @@ class BlockTile {
     }
 
     collide() {
-        const hitRadius = player.r * 1.35;
+        const hitRadius = player.r*1.1 + player.speed*0.95;
         const bitRadius = player.r * 0.95;
         const [blockX, blockY] = [this.x - mapX, this.y - mapY];
 
@@ -171,12 +200,12 @@ class BlockTile {
             if (distanceFromDoor < maxLength*1.2) {
                 // draw the doors text box
                 ctx.fillStyle = "rgba(100, 100, 100, 0.5)";
-                ctx.fillRect(cnv.width/3, cnv.height*0.85, cnv.width/2 - cnv.width/6, cnv.height*0.1);
+                ctx.fillRect(cnv.width/3, cnv.height*0.75, cnv.width/2 - cnv.width/6, cnv.height*0.1);
 
                 ctx.fillStyle = "rgba(255, 255, 255, 0.75)";
                 ctx.font = "25px 'Carter One'";
                 ctx.textAlign = "center";
-                ctx.fillText("Press space to use the door.", cnv.width*0.5, cnv.height*0.91);
+                ctx.fillText("Press space to use the door.", cnv.width*0.5, cnv.height*0.81);
 
                 this.interactable = true;
             }
@@ -212,6 +241,95 @@ setUpGroundTiles();
 setUpBlockTiles();
 
 
+class Enemy {
+    constructor(x, y, r, type, hostility) {
+        this.x = x;
+        this.y = y;
+        this.r = r;
+        this.type = type;
+        this.hostility = hostility; // safe, neutral, dangerous
+
+        this.facingAngle = 0;
+
+        this.roamX = 0;
+        this.roamY = 0;
+        this.roamDist = 0;
+        this.roamSpeed = 0;
+        this.startingRoamX = x;
+        this.startingRoamY = y;
+        this.roamCD = 0;
+    }
+
+    draw() {
+        ctx.save();
+        ctx.translate(this.x-mapX, this.y-mapY);
+        ctx.rotate(this.facingAngle);
+        
+        if (this.type === "pig") {
+            // body
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = "magenta";
+            drawCircle(0, 0, this.r, false);
+            
+            ctx.fillStyle = "pink";
+            drawCircle(0, 0, this.r);
+
+            // eyes
+            ctx.fillStyle = "black";
+            drawCircle(this.r*0.5, -this.r*0.3, this.r*0.2); // left eye
+            drawCircle(this.r*0.5, this.r*0.3, this.r*0.2); // right eye
+            
+            ctx.fillStyle = "white";
+            drawCircle(this.r*0.55, -this.r*0.3, this.r*0.1);
+            drawCircle(this.r*0.55, this.r*0.3, this.r*0.1);
+
+            // nose
+            ctx.fillStyle = "magenta";
+            ctx.fillRect(this.r-1, -this.r*0.35, this.r*0.35, this.r*0.7);
+        }
+
+        ctx.restore();
+    }
+
+    setRoam() {
+        // find random vector coordinates from -1 to 1
+        this.roamX = Math.random()*2 - 1;
+        this.roamY = Math.sqrt(1 - this.roamX**2);
+
+        const posOrNeg = Math.random() < 0.5 ? 1 : -1;
+        this.roamY *= posOrNeg;
+
+        this.facingAngle = Math.atan2(this.roamY, this.roamX);
+        
+        this.roamDist = Math.random()*200 + 150; // 150-350
+        this.roamSpeed = this.roamDist/100;
+
+        this.startingRoamX = this.x;
+        this.startingRoamY = this.y;
+    }
+
+    roam() {
+        // if (this.roamCD === 0) this.roamCD = now;
+        
+        const currentDist = Math.hypot(this.startingRoamX - this.x, this.startingRoamY - this.y);
+        
+        if (currentDist < this.roamDist && this.roamDist != 0) {
+            let proportion = (currentDist - this.roamDist/2) / (this.roamDist/2); // -1 -> 0 -> 1
+            
+            proportion = Math.abs(proportion); // 1 -> 0 -> 1
+            
+            proportion = Math.max(1 - proportion, 0.1); // 0 -> 1 -> 0
+            
+            
+            this.x += this.roamX*this.roamSpeed * proportion;
+            this.y += this.roamY*this.roamSpeed * proportion;
+
+            this.roamCD = Date.now();
+        }
+        else if (now - this.roamCD > 5000) this.setRoam();
+    }
+}
+
         
 // Event Listeners //
 document.addEventListener("mousemove", mousemoveHandler);
@@ -221,6 +339,7 @@ document.addEventListener("click", () => {
 });
 document.addEventListener("mousedown", mousedownHandler);
 document.addEventListener("mouseup", mouseupHandler);
+document.addEventListener("contextmenu", rightClickHandler);
 
 const userIn = document.getElementById("username");
 const displayIn = document.getElementById("display-name");
@@ -267,7 +386,7 @@ function draw() {
 
     
     ctx.fillStyle = "rgb(74, 185, 88)";
-    ctx.fillRect(-26*50 - mapX, -15*50 - mapY, 78*50, 1450 + 750);
+    ctx.fillRect(-26*50-25 - mapX, -15*50-25 - mapY, 78*50, 1450 + 750);
 
     // tiling
     drawGroundTiles();
@@ -279,13 +398,17 @@ function draw() {
         drawTitleScreen();
     }
     else if (gameState === "inGame") {
+        drawMobs();
         drawPlayer();
-        // drawEnemies();
+        drawHotbarAndInventory();
+        drawInfoPopups();
 
         
         // collisions();
         recenterPlayer();
         playerMovement();
+
+        autoSpawnMobs();
     }
 
     // music animation popup
