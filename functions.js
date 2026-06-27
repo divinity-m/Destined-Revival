@@ -112,11 +112,22 @@ function clickHandler() {
             if (!audio.paused) nothingPlaying = false;
         }
         if (nothingPlaying) audioElements[Math.floor(Math.random() * audioElements.length)].play();
+
+        if (mouse.over.inv) {
+            player.invOpen = !player.invOpen;
+        }
+        // m1
+        else if (player.hotbar[player.hotbarSlot] === 0) m1.active = true;
     }
+}
+
+function rightClickHandler(e) {
+    e.preventDefault();
 }
 
 function mousedownHandler() {
     mousedown = true;
+    if (player.hotbar[player.hotbarSlot] === 0) m1.active = true;
 }
 function mouseupHandler() {
     mousedown = false;
@@ -147,11 +158,19 @@ function keydownHandler(e) {
         dPressed = true;
     }
 
-    if (e.code === "Space") {
+    if (e.code === "Space" && gameState === "inGame") {
         for (let i in blockTiles) {
             const tile = blockTiles[i];
             if (tile.interactable) tile.interactionEvent();
         }
+    }
+
+    if (e.code === "KeyG" && gameState === "inGame") {
+        player.invOpen = player.invOpen ? false : true;
+    }
+
+    if (e.code.includes("Digit") && Number(e.code.at(-1)) != 0 && gameState === "inGame") {
+        player.hotbarSlot = Number(e.code.at(-1));
     }
 }
 
@@ -330,22 +349,69 @@ function drawPlayer() {
     ctx.translate(player.x, player.y);
     ctx.rotate(player.facingAngle);
 
+    const r = player.r*1.2;
 
     // player outline
     ctx.lineWidth = 2;
     ctx.strokeStyle = "rgb(198, 134, 66)";
     drawCircle(0, 0, player.r - 1, false); // head
-    drawCircle(0 + player.r*1.2, 0 - player.r*1.2, player.r*0.35, false); // left/top hand
-    drawCircle(0 + player.r*1.2, 0 + player.r*1.2, player.r*0.35, false); // right/bottom hand
+    
+    drawCircle(0 + r + m1.lx, 0 - r, player.r*0.35, false); // left/top hand
+    drawCircle(0 + r + m1.rx, 0 + r + m1.ry, player.r*0.35, false); // right/bottom hand
 
     // player fill
     ctx.fillStyle = "rgb(241, 194, 125)";
     drawCircle(0, 0, player.r - 1.5);
-    drawCircle(0 + player.r*1.2, 0 - player.r*1.2, player.r*0.35 - 0.45); // left/top hand
-    drawCircle(0 + player.r*1.2, 0 + player.r*1.2, player.r*0.35 - 0.45); // right/bottom hand
+    
+    drawCircle(0 + r + m1.lx, 0 - r, player.r*0.35 - 0.45); // left/top hand
+    drawCircle(0 + r + m1.rx, 0 + r + m1.ry, player.r*0.35 - 0.45); // right/bottom hand
 
 
     ctx.restore();
+
+
+    // m1 animation
+    if (m1.active) {
+        if (m1.state === "retracting") {
+            m1.lx = Math.min(m1.lx + (4.55 - m1.lx)/4, 4.5);
+            m1.rx = Math.max(m1.rx + (-5.05 - m1.rx)/4, -5);
+
+            if (m1.rx === -5) m1.state = "extending";
+        }
+        else if (m1.state === "extending") {
+            m1.lx = Math.max(m1.lx + (-5.05 - m1.lx)/4.5, -5);
+
+            const increment = Math.min(m1.rx + (17.05 - m1.rx)/4.5, 17);
+            m1.rx = increment;
+            m1.ry = -increment;
+
+            m1.hitting = m1.rx > 7.5;
+            if (m1.rx === 17) m1.state = "returning";
+        }
+        else if (m1.state === "returning") {
+            m1.lx = Math.min(m1.lx + (0.05 - m1.lx)/5, 0);
+
+            const increment = Math.max(m1.rx + (-0.05 - m1.rx)/5, 0);
+            m1.rx = increment;
+            m1.ry = -increment;
+            
+            if (m1.rx === 0) {
+                m1.reset();
+                if (mousedown && player.hotbar[player.hotbarSlot] === 0) m1.active = true;
+            }
+        }
+    }
+}
+
+
+function drawMobs() {
+    for (let mob of mobs.freeroam) {
+        mob.draw();
+        mob.roam();
+    }
+    for (let mob of mobs.alter) {
+        mob.draw();
+    }
 }
 
 
@@ -367,6 +433,12 @@ function drawBlockTiles() {
         
         tile.draw();
         tile.collide();
+    }
+}
+
+function drawInfoPopups() {
+    for (let i in blockTiles) {
+        let tile = blockTiles[i];
         tile.drawDoorOptions();
     }
 }
@@ -374,29 +446,152 @@ function drawBlockTiles() {
 
 function drawSongAnimation() {
     if (songAnimation.active) {
-        ctx.font = "20px 'Carter One'";
+        ctx.font = "17.5px 'Carter One'";
         ctx.textAlign = "left";
         ctx.lineWidth = 2;
-        
+
+        // draws the text
         ctx.strokeStyle = `rgba(0, 0, 0, ${songAnimation.alpha})`;
         ctx.strokeText(songAnimation.content, songAnimation.x, songAnimation.y);
 
-            
         ctx.fillStyle = `rgba(255, 255, 255, ${songAnimation.alpha})`;
         ctx.fillText(songAnimation.content, songAnimation.x, songAnimation.y);
 
+        // increments the x-coordinate based on the distance from the final x
         const distFromX = 31 - songAnimation.x;
         songAnimation.x = Math.min(songAnimation.x + distFromX/30, 30);
-        
+
+        // fades in/out the text
         songAnimation.alpha = songAnimation.fadeIn ? songAnimation.alpha + 0.015 : songAnimation.alpha - 0.03;
         if (songAnimation.alpha >= 5.5) {
             songAnimation.fadeIn = false;
             songAnimation.alpha = 1.1;
         }
 
+        // resets the text once the alph reaches zero while fading out
         if (!songAnimation.fadeIn && songAnimation.alpha <= 0) songAnimation.reset();
     }
 }
+
+
+function drawHotbarAndInventory() {
+    // hotbar
+    const hotbarLen = player.hotbar.length;
+    const sideLen = cnv.width*0.3/hotbarLen;
+    
+    const hotbarX = (cnv.width - sideLen*hotbarLen) / 2 - 8*(hotbarLen/2);
+    const hotbarY = cnv.height*0.875;
+    
+    const hotbarWidth = (sideLen+8) * hotbarLen;
+    
+    /* LAYERS MUST BE DRAWN SEPERATELY OR ELSE THEY WILL OVERLAP */
+    // far back faded layer
+    ctx.fillStyle = "rgba(100, 100, 100, 0.5)";
+    ctx.fillRect(hotbarX - 8, hotbarY - 8, hotbarWidth + 8, sideLen + 16);
+    
+    ctx.fillStyle = "rgba(25, 25, 25, 0.25)";
+    ctx.fillRect(hotbarX - 4, hotbarY - 4, hotbarWidth, sideLen + 8);
+
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "rgba(50, 50, 50, 0.75)";
+    ctx.strokeRect(hotbarX - 4, hotbarY - 4, hotbarWidth, sideLen + 8);
+    
+    // inner black layer
+    ctx.strokeStyle = "rgb(0, 0, 0)";
+    for (let i = 0; i < hotbarLen; i++) {
+        ctx.lineWidth = (i+1 === player.hotbarSlot) ? 8 : 6;
+        
+        ctx.strokeRect(hotbarX + sideLen*i + 8*i, hotbarY, sideLen, sideLen);
+    }
+
+    // translucent filled layer
+    ctx.fillStyle = "rgba(100, 100, 100, 0.25)";
+    for (let i = 0; i < hotbarLen; i++) ctx.fillRect(hotbarX + sideLen*i + 8*i, hotbarY, sideLen, sideLen);
+
+    // outer grey layer
+    for (let i = 0; i < hotbarLen; i++) {
+        ctx.lineWidth = (i+1 === player.hotbarSlot) ? 5 : 4;
+        ctx.strokeStyle = (i+1 === player.hotbarSlot) ? "rgb(230, 230, 230)" : "rgb(150, 150, 150)";
+        
+        ctx.strokeRect(hotbarX + sideLen*i + 8*i, hotbarY, sideLen, sideLen);
+    }
+
+
+    // inventory
+    let invY = 0;
+    if (player.invOpen) {
+        const invLen = player.inventory.length;
+        
+        const invWidth = ((sideLen+8) * 5);
+        const invHeight = (sideLen+8) * Math.ceil(invLen/5);
+        hotbarBottomDist = cnv.height - cnv.height*0.875 - sideLen;
+
+        invY = cnv.height - (invHeight - 8) - hotbarBottomDist;
+        const invX = cnv.width - invWidth - hotbarBottomDist;
+
+        // far back layer
+        ctx.fillStyle = "rgba(100, 100, 100, 0.5)";
+        ctx.fillRect(invX - 8, invY - 8, invWidth + 8, invHeight + 8);
+        
+        ctx.fillStyle = "rgba(25, 25, 25, 0.25)";
+        ctx.fillRect(invX - 4, invY - 4, invWidth, invHeight);
+    
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = "rgba(50, 50, 50, 0.75)";
+        ctx.strokeRect(invX - 4, invY - 4, invWidth, invHeight);
+        
+        // 2st layer
+        ctx.strokeStyle = "rgb(0, 0, 0)";
+        ctx.lineWidth = 6;
+        for (let i = 0; i < invLen; i++) {
+            ctx.strokeRect(invX + (i%5)*sideLen + (i%5)*8, invY + Math.floor(i/5)*sideLen + Math.floor(i/5)*8, sideLen, sideLen);
+        }
+        
+        // 3nd layer
+        ctx.fillStyle = "rgba(100, 100, 100, 0.25)";
+        for (let i = 0; i < invLen; i++) {
+            ctx.fillRect(invX + (i%5)*sideLen + (i%5)*8, invY + Math.floor(i/5)*sideLen + Math.floor(i/5)*8, sideLen, sideLen);
+        }
+        
+        // 4th layer
+        ctx.strokeStyle = "rgb(150, 150, 150)";
+        ctx.lineWidth = 4;
+        for (let i = 0; i < invLen; i++) {
+            ctx.strokeRect(invX + (i%5)*sideLen + (i%5)*8, invY + Math.floor(i/5)*sideLen + Math.floor(i/5)*8, sideLen, sideLen);
+        }
+    }
+
+    const invBtnY = !player.invOpen ? cnv.height*0.875 + sideLen*0.25 : invY-8 - sideLen*0.5-8;
+    
+    mouse.over.inv = (
+        mouse.x > cnv.width*0.875-8-2 && mouse.x < (cnv.width*0.875-8-2) + (sideLen*2.5+16) &&
+        mouse.y > invBtnY-8 && mouse.y < (invBtnY-8) + (sideLen*0.5 + 16)
+    );
+        
+    ctx.globalAlpha = buttonAlpha.modifyAlpha("inv", mouse.over.inv);
+
+        
+    // far back layer
+    ctx.fillStyle = "rgba(100, 100, 100, 0.5)";
+    ctx.fillRect(cnv.width*0.875 - 8 - 2, invBtnY - 8, sideLen*2.5 + 16, sideLen*0.5 + 16);
+
+    ctx.fillStyle = "rgba(25, 25, 25, 0.25)";
+    ctx.fillRect(cnv.width*0.875 - 4 - 2, invBtnY - 4, sideLen*2.5 + 8, sideLen*0.5 + 8);
+        
+    ctx.fillStyle = "rgb(50, 50, 50)";
+    ctx.fillRect(cnv.width*0.875 - 4 - 2, invBtnY - 4, sideLen*2.5 + 8, sideLen*0.5 + 8);
+
+    // text
+    ctx.fillStyle = "rgb(230, 230, 230)";
+    ctx.textAlign = "center";
+    ctx.font = "15px 'Carter One'";
+
+    ctx.fillText("INVENTORY (G)", cnv.width*0.875-2 + sideLen*1.25, invBtnY + sideLen*0.35);
+
+        
+    ctx.globalAlpha = 1;
+}
+
 
 
 // Continuous Process Functions //
@@ -457,7 +652,7 @@ function recenterPlayer() {
     const dist = Math.hypot(dx, dy);
 
     // move the player once they pass a certain distance
-    if (dist > 1) {
+    if (dist > player.speed/4) {
         const speed = player.speed * 0.2;
         
         player.x += dx/dist * speed;
@@ -469,65 +664,140 @@ function recenterPlayer() {
 }
 
 
+function autoSpawnMobs() {
+    // autoSpawnMobs(): when the player comes near a certain zone, mobs for that zone will start spawning
 
-// Single Process Functions
-function setUpGroundTiles() {
-    // the house's floor
-    let len = 7;
+    // find the pig spawn tile to get its coordinates
+    const pigSpawnTile = groundTiles.find((tile) => tile.type === "pig spawn");
+    const pigSpawnX = pigSpawnTile.x - mapX - 6*50;
+    const pigSpawnY = pigSpawnTile.y - mapY - 6*50;
+
+    const playerInPigSpawn = (
+        player.x+player.r > pigSpawnX && player.x-player.r < pigSpawnX + 13*50 &&
+        player.y+player.r > pigSpawnY && player.y-player.r < pigSpawnY + 13*50
+    );
+
+    // limits the amount of pigs that can spawn
+    // mobs.freeroam.map(mob => mob.type === "pig")
+    let numPigs = 0;
+    for (let mob of mobs.freeroam) {
+        if (mob.type === "pig") numPigs++;
+    }
+
+    if (!playerInPigSpawn || numPigs >= 10) mobs.lastSpawned = now;
     
-    for (let i = 0; i < len*len; i++) {
-        const tileX = (cnv.width/2 - (len*50)/2) + (i%len) * 50;
-        const tileY = (cnv.height/2 - (len*50)/2) + Math.floor(i/len) * 50;
+    if (playerInPigSpawn && numPigs < 7 && now - mobs.lastSpawned > 5000) {
+        const randX = Math.random() * (13*50) + pigSpawnTile.x-6*50;
+        const randY = Math.random() * (13*50) + pigSpawnTile.y-6*50;
+        
+        const pig = new Enemy(randX, randY, 20, "pig", "safe"); // (x, y, r, type, hostility)
+
+        mobs.freeroam.push(pig);
+        mobs.lastSpawned = now;
+    }
+}
+
+
+// Momentary Functions
+function setUpGroundTiles() {
+    // cnv.width/2 and cnv.height/2 are not multiples of 50 at all
+    const halfCnvWidth = 650;
+    const halfCnvHeight = 350;
+    
+    
+    // the house's floor
+    const houseLen = 7;
+    
+    for (let i = 0; i < houseLen**2; i++) {
+        const tileX = (halfCnvWidth - (houseLen*50)/2) + (i%houseLen) * 50;
+        const tileY = (halfCnvHeight - (houseLen*50)/2) + Math.floor(i/houseLen) * 50;
         
         const brickFloorTile = new GroundTile(tileX, tileY, "brick floor");
 
         groundTiles.push(brickFloorTile);
     }
 
-    groundTiles.push(new GroundTile(cnv.width/2 - 25, cnv.height/2 - 25, "spawn"));
+    groundTiles.push(new GroundTile(halfCnvWidth - 25, halfCnvHeight - 25, "spawn"));
+
+    // dirt path to pig spawns
+    const pathLen = 20;
+    
+    for (let i = 0; i < pathLen*3; i++) {
+        const pathX = halfCnvWidth + houseLen*50/2;
+        const pathY = halfCnvHeight - houseLen*50/2 + (Math.floor(houseLen/2)-1) * 50;
+        
+        const dirtPathTile = new GroundTile(pathX + (i%pathLen)*50, pathY + Math.floor(i/pathLen)*50, "dirt");
+        
+        groundTiles.push(dirtPathTile);
+    }
+
+    // dirt section for pigs
+    const pigLen = 13;
+
+    for (let i = 0; i < pigLen**2; i++) {
+        const tileX = halfCnvWidth + houseLen*50/2 + pathLen*50;
+        const tileY = halfCnvHeight - houseLen*50/2 + (Math.floor(houseLen/2)-2) * 50;
+
+        // make a pig spawn tile at the center
+        if (i === Math.floor(pigLen**2 / 2)) {
+            const spawnTile = new GroundTile(tileX + (i%pigLen)*50, tileY + Math.floor(i/pigLen)*50, "pig spawn");
+            groundTiles.push(spawnTile);
+        }
+        
+        const dirtTile = new GroundTile(tileX + (i%pigLen)*50, tileY + Math.floor(i/pigLen)*50, "dirt");
+        groundTiles.push(dirtTile);
+    }
 }
 
 function setUpBlockTiles() {
     // cnv.width/50 = 25.6  |  cnv.height/50 = 14.4
+
+    let [dx, dy] = [25, 25];
     
     // top and bottom borders
     for (let i = 0; i < 26*3; i++) {
-        const topBorderTile = new BlockTile(-26*50 + i*50, -15*50, 50, 50, "void wall");
+        const topBorderTile = new BlockTile(-26*50 + i*50 - dx, -15*50 - dy, 50, 50, "void wall");
         
-        const bottomBorderTile = new BlockTile(-26*50 + i*50, cnv.height + 15*50 - 20, 50, 50, "void wall");
+        const bottomBorderTile = new BlockTile(-26*50 + i*50 - dx, cnv.height-20 + 15*50 - dy, 50, 50, "void wall");
 
         blockTiles.push(topBorderTile, bottomBorderTile);
     }
 
     // left and right borders
     for (let i = 1; i < 15*3 - 1; i++) {
-        const leftBorderTile = new BlockTile(-26*50, -15*50 + i*50, 50, 50, "void wall");
+        const leftBorderTile = new BlockTile(-26*50 - dx, -15*50 + i*50 - dy, 50, 50, "void wall");
         
-        const rightBorderTile = new BlockTile(51*50, -15*50 + i*50, 50, 50, "void wall");
+        const rightBorderTile = new BlockTile(51*50 - dx, -15*50 + i*50 - dy, 50, 50, "void wall");
 
         blockTiles.push(leftBorderTile, rightBorderTile);
     }
 
     // the house's walls
     let len = 7;
+    const houseLen = len;
+    const halfCnvWidth = 650;
+    const halfCnvHeight = 350;
     
     for (let i = 0; i < len; i++) {
-        const tileX = cnv.width/2 - (len*50)/2;
-        const tileY = cnv.height/2 - (len*50)/2;
+        const tileX = halfCnvWidth - (len*50)/2;
+        const tileY = halfCnvHeight - (len*50)/2;
         
         const topHouseTile = new BlockTile(tileX + i*50, tileY, 50, 50, "brick wall");
         const bottomHouseTile = new BlockTile(tileX + i*50, tileY + (len-1)*50, 50, 50, "brick wall");
 
         const leftHouseTile = new BlockTile(tileX, tileY + i*50, 50, 50, "brick wall");
         
-        let rightHouseTile;
-        if (i != Math.floor(len/2)) rightHouseTile = new BlockTile(tileX + (len-1)*50, tileY + i*50, 50, 50, "brick wall");
-        else rightHouseTile = new BlockTile(tileX + (len-1)*50 + 12.5, tileY + i*50, 25, 50, "vertical brick door");
+        const rightHouseTileWall = new BlockTile(tileX + (len-1)*50, tileY + i*50, 50, 50, "brick wall");
+        const rightHouseTileDoor = new BlockTile(tileX + (len-1)*50 + 12.5, tileY + i*50, 25, 50, "vertical brick door");
 
+        const isEvenAndHalf = len%2 === 0 && i === len/2-1
+
+        const rightHouseTile = (i != Math.floor(len/2) && !isEvenAndHalf) ? rightHouseTileWall : rightHouseTileDoor;
+
+        
         blockTiles.push(topHouseTile, bottomHouseTile, leftHouseTile, rightHouseTile);
     }
+    
+
+    
 }
-
-
-
-
